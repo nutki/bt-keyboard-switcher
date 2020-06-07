@@ -82,10 +82,9 @@ class BluetoothDevice:
         return [dev.isocket for dev in d if dev.isocket ] + [dev.csocket for dev in d if dev.csocket ]
     @staticmethod
     def print():
-        print ('------')
         for i in BluetoothDevice.by_index:
             dev = BluetoothDevice.by_index[i]
-            print(dev)
+            debug(dev)
 
     def __init__(self, addr):
         config = Config.get_dev_config(addr)
@@ -105,15 +104,19 @@ class BluetoothDevice:
     def set_isocket(self, sock):
         self.isocket = sock
         self.state = "CONNECTED" if self.csocket else "CONNECTING"
+        BluetoothDevice.print()
     def set_csocket(self, sock):
         self.csocket = sock
         self.state = "CONNECTED" if self.isocket else "CONNECTING"
+        BluetoothDevice.print()
     def del_isocket(self):
         self.isocket = None
         self.state = "DISCONNECTING" if self.csocket else "DISCONNECTED"
+        BluetoothDevice.print()
     def del_csocket(self):
         self.csocket = None
         self.state = "DISCONNECTING" if self.isocket else "DISCONNECTED"
+        BluetoothDevice.print()
     def connect(self):
         debug("Connecting to %s", self.addr)
         BluetoothDevice.connect_nonblocking((self.addr, BluetoothDeviceManager.P_CTRL))
@@ -282,7 +285,7 @@ class KeyboardInput(InputDevice):
     def change_state(self, event):
         if event.type != ecodes.EV_KEY or event.value > 1:
             return
-        debug(ecodes.KEY[event.code])
+        debug("Key event %s %d", ecodes.KEY[event.code], event.value)
         modkey_element = keymap.modkeymap.get(event.code)
         pressed_code = 0
         if modkey_element != None:
@@ -321,7 +324,6 @@ class MouseInput(InputDevice):
             current = time.monotonic()
             if current - self.last < BluetoothDevice.mouse_delay() and not self.change:
                 return
-            # print(current - self.last,self.x,self.y,self.z)
             self.last = current
             speed = BluetoothDevice.mouse_speed()
             self.state[3] = min(127, max(-127, int(self.x * speed))) & 255
@@ -333,7 +335,7 @@ class MouseInput(InputDevice):
             self.change = False
             BluetoothDevice.send_current(self.state)
         if event.type == ecodes.EV_KEY:
-            print(self, event.code, event.value, "KEY")
+            debug("Key event %s %d", ecodes.BTN[event.code], event.value)
             self.change = True
             if event.code >= 272 and event.code <= 276 and event.value < 2:
                 button_no = event.code - 272
@@ -342,7 +344,6 @@ class MouseInput(InputDevice):
                 else:
                     self.state[2] &= ~(1 << button_no)
         if event.type == ecodes.EV_REL:
-#            print(self, event.code, event.value, "REL")
             if event.code == 0:
                 self.x += event.value
             if event.code == 1:
@@ -421,13 +422,11 @@ def event_loop(bt):
             newsock, addr = bt.sinterrupt.accept()
             newsock.setblocking(1)
             BluetoothDevice.get_by_address(addr[0]).set_isocket(newsock)
-            BluetoothDevice.print()
             info("INT %d %s", newsock.fileno(), addr)
         if bt.scontrol in r:
             newsock, addr = bt.scontrol.accept()
             newsock.setblocking(1)
             BluetoothDevice.get_by_address(addr[0]).set_csocket(newsock)
-            BluetoothDevice.print()
             info("CTL %d %s", newsock.fileno(), addr)
 
 if __name__ == "__main__":
