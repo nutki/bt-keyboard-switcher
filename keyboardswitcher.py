@@ -148,6 +148,10 @@ class BluetoothDevice:
         debug("Setting current to %d", index)
         dev = BluetoothDevice.current_dev()
         if index != BluetoothDevice.current:
+            if BluetoothDevice.current == -1:
+                InputDevice.grab(True)
+            if index == -1:
+                InputDevice.grab(False)
             if dev and dev.isocket:
                 dev.send_input([0xA1, 1, 0, 0, 0, 0, 0, 0, 0, 0])
                 dev.send_input([0xA2, 2, 0, 0, 0, 0])
@@ -212,7 +216,7 @@ hotkeys = {
     (keymap.keymap[ecodes.KEY_F9] + 256 * keymap.modkeymap[ecodes.KEY_LEFTCTRL]): lambda: BluetoothDevice.set_current(8),
     (keymap.keymap[ecodes.KEY_F10] + 256 * keymap.modkeymap[ecodes.KEY_LEFTCTRL]): lambda: BluetoothDevice.set_current(9),
     (keymap.keymap[ecodes.KEY_F11] + 256 * keymap.modkeymap[ecodes.KEY_LEFTCTRL]): lambda: BluetoothDevice.set_current(10),
-    (keymap.keymap[ecodes.KEY_F12] + 256 * keymap.modkeymap[ecodes.KEY_LEFTCTRL]): lambda: BluetoothDevice.set_current(11)
+    (keymap.keymap[ecodes.KEY_F12] + 256 * keymap.modkeymap[ecodes.KEY_LEFTCTRL]): lambda: BluetoothDevice.set_current(-1)
 }
 
 
@@ -248,6 +252,16 @@ class InputDevice():
     def set_leds_all(ledvalue):
         for dev in InputDevice.inputs:
             dev.set_leds(ledvalue)
+    @staticmethod
+    def grab(on):
+        if on:
+            debug("Grabbing all input devices")
+            for dev in InputDevice.inputs:
+                dev.device.grab()
+        else:
+            debug("Releasing all input devices")
+            for dev in InputDevice.inputs:
+                dev.device.ungrab()
     def __init__(self, device_node):
         self.device_node = device_node
         self.device = evdev.InputDevice(device_node)

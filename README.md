@@ -49,6 +49,8 @@ its own mouse movement event throttling anyway. To do so modify `/boot/cmdline.t
 cd bt-keyboard-switcher
 sudo ./keyboardswitcher.py
 ```
+* Note this script will take over all input devices connected, so it is not possible to normally stop it if you run it from the local console. To
+  switch to local input passthrouh press `LCtrl + F12`.
 * Press `LCtrl + Esc` (on a keyboad physically connected to Raspberry Pi) this will make Raspberry Pi discoverable as "Pi Keyboard/Mouse".
 * Pair any BT clients (tested with iOS, Android, Windows 10, and Ubuntu Linux)
 * To switch between connected devices you can press `LCtrl + F1`, `LCtrl + F2`, etc. This will also trigger connect attempt if
